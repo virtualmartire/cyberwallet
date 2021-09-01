@@ -72,7 +72,7 @@ async function getTimeSerie(ticker) {
   .then(async (res) => {
 
     const data = await res.json();
-    if (data["Note"]) {
+    if (!data["Time Series (Daily)"]) {
       return "{}";
     } else {
       const one_day = 24 * 60 * 60 * 1000;
