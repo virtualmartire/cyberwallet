@@ -15,3 +15,17 @@ data_entry input format
     },
     ...
 }
+
+# data_entry example
+
+{
+    "Chips' crysis": {
+        "NVDA1": ["NVDA", "2020-11-25", 132.35, ["2021-07-20", 4]],
+        "STM": ["STM", "2021-04-26", 37.54]
+    },
+    "Digitalization": {
+        "TNXT": ["TNXT", "2021-09-01", 46.82],
+        "NEXI": ["NEXI", "2021-09-01", 21.07],
+        "DAL": ["DAL", "2021-09-01", 23.93]
+    }
+}
