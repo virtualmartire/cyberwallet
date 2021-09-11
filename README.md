@@ -16,7 +16,7 @@ data_entry input format
     ...
 }
 
-# data_entry example
+data_entry example
 
 {
     "Chips' crysis": {
