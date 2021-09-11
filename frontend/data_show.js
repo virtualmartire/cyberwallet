@@ -44,6 +44,11 @@ function fillTable(dates_array, prices_array, investmentName, walletName) {
         cell3.innerHTML = "👮🏻‍♀️";
         return;
     }
+
+    if (dates_array[0] == "ticker not found") {
+        cell3.innerHTML = "👻";
+        return;
+    }
     
     const percentage = gain_loss(prices_array);
 

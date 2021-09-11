@@ -13,6 +13,33 @@ async function getApiKey() {
 
 }
 
+function propertiesPick(object) {
+
+  const reducedObject = _.reduce(object, (result, value, index) => {
+    result[index] = _.pick(value, ["2. high", "3. low"]);
+    return result;
+  }, {});
+
+  return reducedObject
+
+}
+
+function datesPick(object, bigbang) {
+
+  const bigbang_ms = Date.parse(bigbang);
+
+  const reducedObject = _.reduce(object, (result, value, date) => {
+    const date_ms = Date.parse(date)
+    if (date_ms >= bigbang_ms) {
+      result[date] = value;
+    }
+    return result;
+  }, {});
+
+  return reducedObject;
+
+}
+
 /////////////////////////////
 
 async function pageBuilder() {
@@ -39,9 +66,9 @@ async function pageBuilder() {
     _.forEach(data_entry, (walletContent, walletName) => {
       _.forEach(walletContent, ([ticker, beginning, bought_at, [split_date = 'no one', split_factor = 1] = []], investmentName) => {
 
-          getTimeSerie(ticker)
-          .then((total_json) => {
-            const [dates_array, prices_array] = processTimeSerie(total_json, beginning, bought_at, split_date, split_factor);
+          getTimeSerie(ticker, bigbang = "2020-01-01")
+          .then((timeserie_dict) => {
+            const [dates_array, prices_array] = processTimeSerie(timeserie_dict, beginning, bought_at, split_date, split_factor);
             fillTable(dates_array, prices_array, investmentName, walletName);
           });
 
@@ -55,29 +82,45 @@ async function pageBuilder() {
 }
 
 /* Search in the local storage and in the Alpha Vantage DB for the requested data */
-async function getTimeSerie(ticker) {
+async function getTimeSerie(ticker, bigbang) {
 
   const stored = localStorage.getItem(ticker) || "{}";
   const storedData = JSON.parse(stored);
-  const apikey = await getApiKey();
-
   const now = (new Date()).getTime();
 
   if (storedData.data && now < storedData.expire) {
     return Promise.resolve(storedData.data);
   }
 
+  const apikey = await getApiKey();
   const url_request = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${ticker}&outputsize=full&apikey=${apikey}`;
+  
   return fetch(url_request)
-  .then(async (res) => {
+  .then(async (result) => {
 
-    const data = await res.json();
-    if (!data["Time Series (Daily)"]) {
-      return "{}";
+    const responseData = await result.json();
+    
+
+    if (!responseData["Time Series (Daily)"]) {
+
+      if (responseData["Error Message"]) {
+        return "ticker not found";
+      } else {
+        return "{}";
+      }
+
     } else {
+
+      var data = responseData["Time Series (Daily)"];
+
+      data = propertiesPick(data);
+      data = datesPick(data, bigbang);
+
       const one_day = 24 * 60 * 60 * 1000;
       const expire = now + one_day;
-      window.localStorage.setItem(ticker, JSON.stringify({ expire, data }));
+
+      localStorage.setItem(ticker, JSON.stringify( {expire, data} ));
+
       return data;
     }
 
@@ -87,15 +130,15 @@ async function getTimeSerie(ticker) {
 }
 
 /* Extract the interesting interval from a time serie's dictionary */
-function processTimeSerie(
-  total_json, beginning, bought_at, split_date, split_factor
-) {
+function processTimeSerie(timeserie_dict, beginning, bought_at, split_date, split_factor) {
 
-  if (total_json == "{}" ) {
-    return [[], []];
+  if (timeserie_dict == "ticker not found") {
+    return [["ticker not found"], ["ticker not found"]];
   }
 
-  const timeserie_dict = total_json["Time Series (Daily)"];
+  if (timeserie_dict == "{}" ) {
+    return [[], []];
+  }
 
   var prices_array = [];
   var dates_array = [];
@@ -118,7 +161,6 @@ function processTimeSerie(
     } else {
       dates_array.push(date.slice(5));
       prices_array.push(bought_at);
-      break;
     }
 
   }
