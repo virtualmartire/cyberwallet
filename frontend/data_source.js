@@ -40,13 +40,13 @@ function datesPick(object, bigbang) {
 
 }
 
-/////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 async function pageBuilder() {
 
   try {
 
-    /* Get the data entries andd the key to make the queries */
+    /* Get the data entries and the key to make the queries */
     const data_entry_raw = await fetch("./data_entry.json");
     const data_entry = await data_entry_raw.json();
 
@@ -88,8 +88,14 @@ async function getTimeSerie(ticker, bigbang) {
   const storedData = JSON.parse(stored);
   const now = (new Date()).getTime();
 
+  // if data already caught
   if (storedData.data && now < storedData.expire) {
     return Promise.resolve(storedData.data);
+  }
+
+  // if the stock is italian
+  if (ticker=="_FITALIA") {
+    return Promise.resolve("_FITALIA");
   }
 
   const apikey = await getApiKey();
@@ -132,6 +138,10 @@ async function getTimeSerie(ticker, bigbang) {
 /* Extract the interesting interval from a time serie's dictionary */
 function processTimeSerie(timeserie_dict, beginning, bought_at, split_date, split_factor) {
 
+  if (timeserie_dict == "_FITALIA") {
+    return [["_FITALIA"], ["_FITALIA"]];
+  }
+  
   if (timeserie_dict == "ticker not found") {
     return [["ticker not found"], ["ticker not found"]];
   }

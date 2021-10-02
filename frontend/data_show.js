@@ -49,6 +49,11 @@ function fillTable(dates_array, prices_array, investmentName, walletName) {
         cell3.innerHTML = "👻";
         return;
     }
+
+    if (dates_array[0] == "_FITALIA") {
+        cell3.innerHTML = "🇮🇹";
+        return;
+    }
     
     const percentage = gain_loss(prices_array);
 
