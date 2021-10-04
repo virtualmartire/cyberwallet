@@ -1,4 +1,5 @@
 var apikey;
+const bigbang = new Date("2020-01-01");
 
 async function getApiKey() {
 
@@ -13,10 +14,25 @@ async function getApiKey() {
 
 }
 
+function string_to_date(object) {
+  const transformedObject = _.mapKeys(object, (value, key) => {
+    return new Date(key);
+  });
+  return transformedObject;
+}
+
+function date_to_string(object) {
+  const transformedObject = _.mapKeys(object, (value, key) => {
+    const date_obj = new Date(key);
+    return date_obj.toISOString().slice(0, 10);
+  });
+  return transformedObject;
+}
+
 function propertiesPick(object) {
 
-  const reducedObject = _.reduce(object, (result, value, index) => {
-    result[index] = _.pick(value, ["2. high", "3. low"]);
+  const reducedObject = _.reduce(object, (result, value, date) => {
+    result[date] = _.pick(value, ["2. high", "3. low"]);
     return result;
   }, {});
 
@@ -24,17 +40,44 @@ function propertiesPick(object) {
 
 }
 
-function datesPick(object, bigbang) {
-
-  const bigbang_ms = Date.parse(bigbang);
+function datesPick(object, origin) {
 
   const reducedObject = _.reduce(object, (result, value, date) => {
-    const date_ms = Date.parse(date)
-    if (date_ms >= bigbang_ms) {
-      result[date] = value;
+    var date_obj = new Date(date);
+    if (date_obj >= origin) {
+      result[date_obj] = value;
     }
     return result;
   }, {});
+
+  return reducedObject;
+
+}
+
+function cut_process_split(object, beginning, bought_at, split_date, split_factor) {
+
+  var reducedObject = _.reduce(object, (result, value, date) => {
+
+    var date_obj = new Date(date);
+    if (date_obj >= beginning) {
+
+      const highest_price = parseFloat(value["2. high"]);
+      const lowest_price = parseFloat(value["3. low"]);
+      var middle_price = (highest_price + lowest_price) / 2;
+
+      if (date_obj < split_date) {      // split_date is the first day of the new splitted price
+        middle_price /= split_factor;
+      }
+
+      result[date_obj] = middle_price;
+
+    }
+
+    return result;
+
+  }, {});
+
+  reducedObject[beginning] = bought_at;
 
   return reducedObject;
 
@@ -64,13 +107,16 @@ async function pageBuilder() {
 
     /* Get the data and fill the tables */
     _.forEach(data_entry, (walletContent, walletName) => {
-      _.forEach(walletContent, ([ticker, beginning, bought_at, [split_date = 'no one', split_factor = 1] = []], investmentName) => {
+      _.forEach(walletContent, ([ticker, beginning, bought_at, [split_date = "1996-01-11", split_factor = 1] = []], investmentName) => {
 
-          getTimeSerie(ticker, bigbang = "2020-01-01")
-          .then((timeserie_dict) => {
-            const [dates_array, prices_array] = processTimeSerie(timeserie_dict, beginning, bought_at, split_date, split_factor);
-            fillTable(dates_array, prices_array, investmentName, walletName);
-          });
+        var beginning = new Date(beginning);
+        var split_date = new Date(split_date);
+        
+        getTimeSerie(ticker, bigbang)
+        .then((timeserie_dict) => {
+          const [dates_array, prices_array] = processTimeSerie(timeserie_dict, beginning, bought_at, split_date, split_factor);
+          fillTable(dates_array, prices_array, investmentName, walletName);
+        });
 
       });
     });
@@ -84,6 +130,11 @@ async function pageBuilder() {
 /* Search in the local storage and in the Alpha Vantage DB for the requested data */
 async function getTimeSerie(ticker, bigbang) {
 
+  // if the stock is italian
+  if (ticker=="_FITALIA") {
+    return Promise.resolve("_FITALIA");
+  }
+
   const stored = localStorage.getItem(ticker) || "{}";
   const storedData = JSON.parse(stored);
   const now = (new Date()).getTime();
@@ -91,11 +142,6 @@ async function getTimeSerie(ticker, bigbang) {
   // if data already caught
   if (storedData.data && now < storedData.expire) {
     return Promise.resolve(storedData.data);
-  }
-
-  // if the stock is italian
-  if (ticker=="_FITALIA") {
-    return Promise.resolve("_FITALIA");
   }
 
   const apikey = await getApiKey();
@@ -106,18 +152,18 @@ async function getTimeSerie(ticker, bigbang) {
 
     const responseData = await result.json();
     
-
     if (!responseData["Time Series (Daily)"]) {
 
       if (responseData["Error Message"]) {
-        return "ticker not found";
+        return "error message";           // if an error happens
       } else {
-        return "{}";
+        return "call limit exceeded";    // if the call limit was exceeded
       }
 
     } else {
 
       var data = responseData["Time Series (Daily)"];
+      data = string_to_date(data);
 
       data = propertiesPick(data);
       data = datesPick(data, bigbang);
@@ -125,9 +171,10 @@ async function getTimeSerie(ticker, bigbang) {
       const one_day = 24 * 60 * 60 * 1000;
       const expire = now + one_day;
 
-      localStorage.setItem(ticker, JSON.stringify( {expire, data} ));
+      localStorage.setItem(ticker, JSON.stringify( {expire, data} ));   // save the data in the localStorage for future usage
 
       return data;
+
     }
 
   })
@@ -142,40 +189,22 @@ function processTimeSerie(timeserie_dict, beginning, bought_at, split_date, spli
     return [["_FITALIA"], ["_FITALIA"]];
   }
   
-  if (timeserie_dict == "ticker not found") {
-    return [["ticker not found"], ["ticker not found"]];
+  if (timeserie_dict == "error message") {
+    return [["error message"], ["error message"]];
   }
 
-  if (timeserie_dict == "{}" ) {
-    return [[], []];
+  if (timeserie_dict == "call limit exceeded") {
+    return [["call limit exceeded"], ["call limit exceeded"]];
   }
 
-  var prices_array = [];
-  var dates_array = [];
-  var split = false;
-  for (let date in timeserie_dict) {
+  const processedTimeSerie = cut_process_split(timeserie_dict, beginning, bought_at, split_date, split_factor);
 
-    const date_dict = timeserie_dict[date];
-    if (date != beginning) {
-      const highest_price = parseFloat(date_dict["2. high"]);
-      const lowest_price = parseFloat(date_dict["3. low"]);
-      var middle_price = (highest_price + lowest_price) / 2;
-      if (split == true) {
-        middle_price /= split_factor;
-      }
-      dates_array.push(date.slice(5));
-      prices_array.push(middle_price);
-      if (date == split_date) {
-        split = true;
-      }
-    } else {
-      dates_array.push(date.slice(5));
-      prices_array.push(bought_at);
-    }
+  const stringifiedTimeSerie = date_to_string(processedTimeSerie);
 
-  }
+  const dates_array = _.keys(stringifiedTimeSerie).reverse().map(x => new Date(x));
+  const prices_array = _.values(stringifiedTimeSerie).reverse();
 
-  return [dates_array.reverse(), prices_array.reverse()];
+  return [dates_array, prices_array];
 
 }
 

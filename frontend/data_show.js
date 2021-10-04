@@ -40,13 +40,13 @@ function fillTable(dates_array, prices_array, investmentName, walletName) {
     
     const cell3 = document.getElementById(investmentName+" cell3");
 
-    if (dates_array.length == 0) {
+    if (dates_array[0] == "call limit exceeded") {
         cell3.innerHTML = "👮🏻‍♀️";
         return;
     }
 
-    if (dates_array[0] == "ticker not found") {
-        cell3.innerHTML = "👻";
+    if (dates_array[0] == "error message") {
+        cell3.innerHTML = "❌";
         return;
     }
 
@@ -74,32 +74,34 @@ function fillTable(dates_array, prices_array, investmentName, walletName) {
 }
 
 /* Draws the corresponding chart */
-google.charts.load('current', {'packages':['line']});
+google.charts.load('current', {'packages':['corechart']});
 function drawChart(dates_array, prices_array, investment, walletName, color) {
 
-    var x = dates_array;
-    var y = prices_array;
-    var datatable = zip_arrays(x, y);
+    const x = dates_array;
+    const y = prices_array;
+    const datatable = zip_arrays(x, y);
 
-    var data = new google.visualization.DataTable();
-    data.addColumn('string', 'Time');
-    data.addColumn('number', investment);
+    const data = new google.visualization.DataTable();
+    data.addColumn('date', "Date");
+    data.addColumn('number', "Price");
 
     data.addRows(datatable);
 
-    var table_height = document.getElementById('table '+walletName).offsetHeight;
-    var chart_height = table_height > 200 ? table_height : 200; 
-    var options = {
+    const table_height = document.getElementById('table '+walletName).offsetHeight;
+    const chart_height = table_height > 200 ? table_height : 200; 
+    const options = {
         colors: [color],
         legend: {position: 'none'},
+        width: '100%',
         height: chart_height,
         hAxis: {title: "time", textStyle: {fontSize: 14}},
-        vAxis: {title: "price", textStyle: {fontSize: 14}}
+        vAxis: {title: "price", textStyle: {fontSize: 14}},
+        chartArea: {width: '80%', height: '75%'}
     };
 
-    var chart = new google.charts.Line(document.getElementById('chart '+walletName));
+    const chart = new google.visualization.LineChart( document.getElementById('chart '+walletName) );
+    chart.draw(data, options);
 
-    chart.draw(data, google.charts.Line.convertOptions(options));
     document.getElementById('chart title '+walletName).innerHTML = investment;
 
 }
