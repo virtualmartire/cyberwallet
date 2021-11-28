@@ -1,29 +1,17 @@
-# cyberwallet
+This is the web app that I use to monitor my investments. It reads my diary from *data_entry.json*, searches for the economic data with the yfinance Python API (https://pypi.org/project/yfinance/) and finally visualizes them in a table-chart fashion.
 
-This is the web app that I use to monitor my investments. It reads my diary from *data_entry.json*, searches for the economic data in the AlphaVantage DB (https://www.alphavantage.co/) and finally visualizes them in a table-chart fashion. Only american stocks are treated at the moment :(
+# backend
+It consists of a python script that downloads the investments' coordinates contained in *data_entry.json* from the server and updates (and uploads) the timeseries database every 24 hours.
 
-The code is entirely commented.
+# frontend
+Some HTML and CSS to construct the tables and a javascript snippet that pictures the graphs with the Google Chatrs API.
 
 # data_entry input format
 
 {\
     wallet name: {\
-        investment name: [ticker, initial date of the investment, price of the object at that moment, [first day of the new splitted price, split factor]],\
+        investment name: [ticker, initial date of the investment, price of the object at that moment],\
         ...\
     },\
     ...\
-}
-
-# data_entry example
-
-{\
-    "Chips' crysis": {\
-        "NVDA1": ["NVDA", "2020-11-25", 132.35, ["2021-07-20", 4]],\
-        "STM": ["STM", "2021-04-26", 37.54]\
-    },\
-    "Digitalization": {\
-        "TNXT": ["TNXT", "2021-09-01", 46.82],\
-        "NEXI": ["NEXI", "2021-09-01", 21.07],\
-        "DAL": ["DAL", "2021-09-01", 23.93]\
-    }\
 }

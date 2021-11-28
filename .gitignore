@@ -1,3 +1,2 @@
 .DS_Store
-frontend/apikey.json
-frontend/data_entry.json
+backend/credentials.json
