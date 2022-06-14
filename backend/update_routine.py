@@ -14,20 +14,21 @@ DATABASE = {}
 
 # Fetch the investments' coordinates from the server
 with urllib.request.urlopen('https://www.stefanomartire.it/cyberwallet/data_entry.json') as data_entry_file:
-    data_entry = json.load(data_entry_file)		# <---
+    data_entry = json.load(data_entry_file)
 
 for wallet in data_entry.values():
 	for investment in wallet.values():
 
 		ticker = investment[0]
-		if ticker not in DATABASE:
+		if ticker not in DATABASE:		# because some investments are on the same asset
+			
 			# Get the data
 			dataframe = yf.Ticker(ticker).history(period='5y')
 
 			# Compute the mean prices, simplify the dataframe and remove NaN
 			dataframe["mean_price"] = (dataframe['High'] + dataframe['Low']) / 2
 			dataframe = dataframe['mean_price']
-			dataframe = dataframe.interpolate()
+			dataframe = dataframe.interpolate().fillna(method='ffill').fillna(method='bfill')
 
 			# Export the python dictionary
 			dataframe = dataframe.round(2)
