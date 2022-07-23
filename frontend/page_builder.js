@@ -22,7 +22,7 @@ function createTable(walletName) {
 }
 
 /* Create and fill a row */
-function fillRow(walletName, investmentName, beginning, bought_at, timeseries) {
+function fillRow(walletName, investmentName, beginning, timeseries) {
 
   const row = document.getElementById('table '+walletName).insertRow();
 
@@ -32,7 +32,7 @@ function fillRow(walletName, investmentName, beginning, bought_at, timeseries) {
   const cell3 = row.insertCell();
   cell3.style.textAlign = "center";
   
-  const percentage = compute_percentage(_.values(timeseries), bought_at);
+  const percentage = compute_percentage(timeseries, beginning);
 
   const color = percentage > 0 ? "green" : "red";
   cell3.style.color = color;
@@ -43,9 +43,12 @@ function fillRow(walletName, investmentName, beginning, bought_at, timeseries) {
   
 }
 
-function compute_percentage(prices_array, bought_at) {
+function compute_percentage(timeseries, beginning) {
 
-  var percentage = (prices_array[prices_array.length - 1] / bought_at) * 100 - 100;
+  const prices_array = _.values(timeseries);
+  const last_price = prices_array[prices_array.length - 1];
+  const percentage = (last_price / timeseries[beginning]) * 100 - 100;
+  
   return percentage;
 
 }
@@ -75,10 +78,10 @@ async function pageBuilder() {
       /* Create one row per investment */
       _.forEach(walletContent, (investmentContent, investmentName) => {
         
-        const [ticker, beginning, bought_at] = investmentContent;
+        const [ticker, beginning] = investmentContent;
         const timeseries = database[ticker];
 
-        fillRow(walletName, investmentName, beginning, bought_at, timeseries);
+        fillRow(walletName, investmentName, beginning, timeseries);
 
       });
 

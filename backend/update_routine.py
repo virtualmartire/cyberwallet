@@ -1,3 +1,5 @@
+"""This script updates database.json with new data from the yfinance API."""
+
 import urllib
 import datetime
 import json

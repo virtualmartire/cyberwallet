@@ -10,7 +10,7 @@ Some HTML and CSS to construct the tables and a javascript snippet that pictures
 
 {\
     wallet name: {\
-        investment name: [ticker, initial date of the investment, price of the object at that moment],\
+        investment name: [ticker, initial date of the investment],\
         ...\
     },\
     ...\
