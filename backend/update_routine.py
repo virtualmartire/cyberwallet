@@ -3,8 +3,9 @@
 import urllib
 import datetime
 import json
-import yfinance as yf
 import ftplib
+
+import yfinance as yf
 
 #
 ##
@@ -30,7 +31,7 @@ for wallet in data_entry.values():
 			# Compute the mean prices, simplify the dataframe and remove NaN
 			dataframe["mean_price"] = (dataframe['High'] + dataframe['Low']) / 2
 			dataframe = dataframe['mean_price']
-			dataframe = dataframe.interpolate().fillna(method='ffill').fillna(method='bfill')
+			dataframe = dataframe.interpolate().ffill().bfill()
 
 			# Export the python dictionary
 			dataframe = dataframe.round(2)
@@ -48,7 +49,7 @@ with open('frontend/database.json', 'w') as db_file:
 # Upload the database on the server
 with open('backend/credentials.json', 'r') as credentials_file:
 	credentials = json.load(credentials_file)
-session = ftplib.FTP('ftp.stefanomartire.it', credentials['id'], credentials['password'])
+session = ftplib.FTP('ftp.stefanomartire.it', credentials['id'], credentials['password'], encoding='iso-8859-1')
 with open('frontend/database.json', 'rb') as db_file:
     session.storbinary('STOR cyberwallet/database.json', db_file)
 session.quit()
