@@ -1,0 +1,33 @@
+version: '3'
+
+services:
+  frontend:
+    image: nginx:1.27.4
+    container_name: cw-frontend
+    restart: unless-stopped
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    networks:
+      - my-network
+  backend:
+    build: .
+    container_name: cw-backend
+    volumes:
+      - ./frontend:/app/frontend
+    deploy:
+      restart_policy:
+        condition: none
+  backend-scheduler:
+    image: alpine
+    container_name: cw-scheduler
+    restart: unless-stopped
+    command: >
+      sh -c "apk add --no-cache docker-cli &&
+             echo '0 0 * * * docker start cw-backend' > /etc/crontabs/root &&
+             crond -f -d 8"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+networks:
+  my-network:
+    external: true

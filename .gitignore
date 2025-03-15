@@ -1,4 +1,4 @@
 .DS_Store
 
-backend/credentials.json
 frontend/data_entry.json
+frontend/database.json

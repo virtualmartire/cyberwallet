@@ -1,11 +1,13 @@
-FROM python:3.9.6
+FROM python:3.10.9-slim
+
+WORKDIR /app
 
 RUN apt-get -y update && apt-get -y upgrade
+
 RUN pip install --upgrade pip
+RUN pip install yfinance==0.2.54
 
-RUN pip install yfinance==0.2.33
-RUN pip install pandas==2.1.4
+COPY backend /app/backend
 
-WORKDIR /cyberwallet
-COPY . .
-CMD while true; do python ./backend/update_routine.py; sleep 86400; done
+# CMD while true; do python ./backend/update_routine.py; sleep 86400; done
+CMD python ./backend/update_routine.py
