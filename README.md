@@ -5,13 +5,3 @@ It consists of a python script that downloads the investments' coordinates conta
 
 # frontend
 Some HTML and CSS to construct the tables and a javascript snippet that pictures the graphs with the Google Chatrs API.
-
-# data_entry input format
-
-{\
-    wallet name: {\
-        investment name: [ticker, initial date of the investment],\
-        ...\
-    },\
-    ...\
-}
