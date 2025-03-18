@@ -1,6 +1,5 @@
-version: '3'
-
 services:
+
   frontend:
     image: nginx:1.27.4
     container_name: cw-frontend
@@ -8,15 +7,14 @@ services:
     volumes:
       - ./frontend:/usr/share/nginx/html:ro
     networks:
-      - my-network
+      - my-network    # to communicate with NPM
+
   backend:
     build: .
     container_name: cw-backend
     volumes:
       - ./frontend:/app/frontend
-    deploy:
-      restart_policy:
-        condition: none
+
   backend-scheduler:
     image: alpine
     container_name: cw-scheduler
